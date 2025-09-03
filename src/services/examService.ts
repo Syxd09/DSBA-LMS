@@ -95,7 +95,15 @@ const initializeData = () => {
 // Test Management
 export const getTests = (): Test[] => {
   initializeData();
-  return JSON.parse(localStorage.getItem(TESTS_KEY) || '[]');
+  const testsData = JSON.parse(localStorage.getItem(TESTS_KEY) || '[]');
+  
+  // Convert date strings back to Date objects
+  return testsData.map((test: any) => ({
+    ...test,
+    createdAt: new Date(test.createdAt),
+    startTime: test.startTime ? new Date(test.startTime) : undefined,
+    endTime: test.endTime ? new Date(test.endTime) : undefined,
+  }));
 };
 
 export const getActiveTests = (): Test[] => {
@@ -151,7 +159,17 @@ export const toggleTestStatus = (id: string): boolean => {
 // Submission Management
 export const getSubmissions = (): TestSubmission[] => {
   initializeData();
-  return JSON.parse(localStorage.getItem(SUBMISSIONS_KEY) || '[]');
+  const submissionsData = JSON.parse(localStorage.getItem(SUBMISSIONS_KEY) || '[]');
+  
+  // Convert date strings back to Date objects
+  return submissionsData.map((submission: any) => ({
+    ...submission,
+    submittedAt: new Date(submission.submittedAt),
+    antiCheatEvents: submission.antiCheatEvents?.map((event: any) => ({
+      ...event,
+      timestamp: new Date(event.timestamp)
+    })) || []
+  }));
 };
 
 export const getSubmissionsByTest = (testId: string): TestSubmission[] => {
