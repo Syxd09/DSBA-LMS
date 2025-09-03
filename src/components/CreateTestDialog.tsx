@@ -338,16 +338,35 @@ const CreateTestDialog = ({ open, onOpenChange, onTestCreated }: CreateTestDialo
                 </div>
 
                 {(currentQuestion.type === 'mcq' || currentQuestion.type === 'checkbox') && (
-                  <div className="space-y-2">
-                    <Label>Options (Add [CORRECT] after the correct answers)</Label>
+                  <div className="space-y-4">
+                    <Label>Options</Label>
                     {currentQuestion.options?.map((option, index) => (
-                      <Input
-                        key={index}
-                        placeholder={`Option ${index + 1} (add [CORRECT] if this is correct)`}
-                        value={option}
-                        onChange={(e) => updateOption(index, e.target.value)}
-                      />
+                      <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                        <div className="flex-1">
+                          <Input
+                            placeholder={`Option ${index + 1}`}
+                            value={option.replace(' [CORRECT]', '')}
+                            onChange={(e) => updateOption(index, e.target.value + (option.includes('[CORRECT]') ? ' [CORRECT]' : ''))}
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id={`correct-${index}`}
+                            checked={option.includes('[CORRECT]')}
+                            onCheckedChange={(checked) => {
+                              const baseOption = option.replace(' [CORRECT]', '');
+                              updateOption(index, baseOption + (checked ? ' [CORRECT]' : ''));
+                            }}
+                          />
+                          <Label htmlFor={`correct-${index}`} className="text-sm font-medium text-success">
+                            Correct Answer
+                          </Label>
+                        </div>
+                      </div>
                     ))}
+                    <p className="text-xs text-muted-foreground">
+                      ✓ Mark the correct answer(s) using the checkbox. For MCQ, select only one. For multiple choice, select all correct options.
+                    </p>
                   </div>
                 )}
 

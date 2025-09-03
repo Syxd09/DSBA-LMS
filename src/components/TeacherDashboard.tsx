@@ -7,6 +7,9 @@ import { Badge } from '@/components/ui/badge';
 import { LogOut, Plus, Play, Pause, Users, BarChart3, Shield, FileText, Settings, Clock } from 'lucide-react';
 import DSBAHeader from './DSBAHeader';
 import CreateTestDialog from './CreateTestDialog';
+import COPOAnalytics from './COPOAnalytics';
+import AntiCheatMonitor from './AntiCheatMonitor';
+import Leaderboard from './Leaderboard';
 import { getTests, getSubmissionsByTest, toggleTestStatus } from '@/services/examService';
 import { Test, TestSubmission } from '@/types/exam';
 import { toast } from 'sonner';
@@ -241,36 +244,25 @@ const TeacherDashboard = () => {
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
-            <h2 className="text-2xl font-semibold">Analytics & Reports</h2>
-            <Card className="dsba-card">
-              <CardHeader>
-                <CardTitle>Performance Overview</CardTitle>
-                <CardDescription>Detailed analytics coming soon with CO/PO mapping</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-center h-40 text-muted-foreground">
-                  <BarChart3 className="w-16 h-16" />
-                  <span className="ml-4 text-lg">Analytics Dashboard - Under Development</span>
-                </div>
-              </CardContent>
-            </Card>
+            <Tabs defaultValue="copo" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="copo">CO/PO Analytics</TabsTrigger>
+                <TabsTrigger value="leaderboard">Leaderboards</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="copo">
+                <COPOAnalytics />
+              </TabsContent>
+              
+              <TabsContent value="leaderboard">
+                <Leaderboard />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* Anti-Cheat Tab */}
           <TabsContent value="anticheat" className="space-y-6">
-            <h2 className="text-2xl font-semibold">Anti-Cheat Monitoring</h2>
-            <Card className="dsba-card">
-              <CardHeader>
-                <CardTitle>Security Events</CardTitle>
-                <CardDescription>Monitor suspicious activities during exams</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-center h-40 text-muted-foreground">
-                  <Shield className="w-16 h-16" />
-                  <span className="ml-4 text-lg">Anti-Cheat Dashboard - Under Development</span>
-                </div>
-              </CardContent>
-            </Card>
+            <AntiCheatMonitor />
           </TabsContent>
         </Tabs>
 
