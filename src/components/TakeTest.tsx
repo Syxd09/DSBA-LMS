@@ -34,9 +34,35 @@ const TakeTest = () => {
   
   const intervalRef = useRef<NodeJS.Timeout>();
   const testStarted = useRef(false);
+  const sessionKeyRef = useRef<string | null>(null);
+
+  const saveSession = (data?: Partial<{
+    answers: Record<string, string | string[]>;
+    currentQuestionIndex: number;
+    timeLeft: number;
+    studentName: string;
+    antiCheatEvents: any[];
+  }>) => {
+    if (!sessionKeyRef.current) return;
+    try {
+      const snapshot = {
+        answers,
+        currentQuestionIndex,
+        timeLeft,
+        studentName,
+        antiCheatEvents,
+        savedAt: Date.now(),
+        ...(data || {})
+      };
+      localStorage.setItem(sessionKeyRef.current, JSON.stringify(snapshot));
+    } catch {}
+  };
 
   useEffect(() => {
     if (!testId || !user) return;
+
+    // Prepare session storage key
+    sessionKeyRef.current = `dsba_test_session_${user.id}_${testId}`;
 
     const testData = getTestById(testId);
     if (!testData) {
@@ -46,7 +72,34 @@ const TakeTest = () => {
     }
 
     setTest(testData);
-    setTimeLeft(testData.duration * 60); // Convert minutes to seconds
+    // Try restore session
+    let initialTimeLeft = testData.duration * 60; // seconds
+    try {
+      if (sessionKeyRef.current) {
+        const raw = localStorage.getItem(sessionKeyRef.current);
+        if (raw) {
+          const parsed = JSON.parse(raw) as {
+            answers?: Record<string, string | string[]>;
+            currentQuestionIndex?: number;
+            timeLeft?: number;
+            studentName?: string;
+            antiCheatEvents?: any[];
+            savedAt?: number;
+          };
+          if (parsed) {
+            if (parsed.answers) setAnswers(parsed.answers);
+            if (typeof parsed.currentQuestionIndex === 'number') setCurrentQuestionIndex(parsed.currentQuestionIndex);
+            if (typeof parsed.timeLeft === 'number' && typeof parsed.savedAt === 'number') {
+              const elapsed = Math.floor((Date.now() - parsed.savedAt) / 1000);
+              initialTimeLeft = Math.max(0, parsed.timeLeft - elapsed);
+            }
+            if (typeof parsed.studentName === 'string') setStudentName(parsed.studentName);
+            if (Array.isArray(parsed.antiCheatEvents)) setAntiCheatEvents(parsed.antiCheatEvents);
+          }
+        }
+      }
+    } catch {}
+    setTimeLeft(initialTimeLeft);
     testStarted.current = true;
 
     // Start timer
@@ -131,14 +184,26 @@ const TakeTest = () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       document.removeEventListener('keydown', handleCopyPaste);
       document.removeEventListener('contextmenu', handleRightClick);
+      // Do a final save to capture latest state on unmount
+      saveSession();
     };
   }, [testId, user, navigate]);
+
+  // Persist session snapshot on key state changes
+  useEffect(() => {
+    if (!testStarted.current) return;
+    saveSession();
+  }, [answers, currentQuestionIndex, studentName, antiCheatEvents, timeLeft]);
 
   const handleTimeUp = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
     toast.error('Time is up! Submitting your test automatically.');
+    // Clear saved session on time up
+    if (sessionKeyRef.current) {
+      localStorage.removeItem(sessionKeyRef.current);
+    }
     handleSubmitTest();
   };
 
@@ -182,6 +247,11 @@ const TakeTest = () => {
         timeSpent,
         antiCheatEvents
       );
+
+      // Clear saved session on successful submit
+      if (sessionKeyRef.current) {
+        localStorage.removeItem(sessionKeyRef.current);
+      }
 
       toast.success('Test submitted successfully!');
       navigate('/student-dashboard');
